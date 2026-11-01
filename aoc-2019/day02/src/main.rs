@@ -3,6 +3,7 @@ use OpCode::{Add, Halt, Multiply};
 
 fn main() {
     part1();
+    part2();
 }
 
 fn part1() {
@@ -22,6 +23,41 @@ fn part1() {
     let val_pos_0 = exec_program(&mut program, &mut pc);
 
     println!("Part 1: final program value at pos 0 {}", val_pos_0)
+}
+
+fn part2() {
+    let target = 19690720;
+    let mut result = None;
+
+    'outer_loop: for noun in 0..=99 {
+        for verb in 0..=99 {
+            result = try_inputs(noun, verb, target);
+            if result.is_some() {
+                break 'outer_loop;
+            }
+        }
+    }
+
+    println!("Part 2: 100 * noun + verb: {}", result.unwrap())
+}
+
+fn try_inputs(noun: i32, verb: i32, target: i32) -> Option<i32> {
+    let input = read_input(2).unwrap();
+    let mut pc = 0;
+
+    let mut program: Vec<i32> = input
+        .first()
+        .unwrap()
+        .split(",")
+        .map(|value| i32::from_str_radix(value, 10).unwrap())
+        .collect();
+
+    program[1] = noun;
+    program[2] = verb;
+
+    let val_pos_0 = exec_program(&mut program, &mut pc);
+
+    (val_pos_0 == target as u32).then_some(100 * noun + verb)
 }
 
 fn exec_program(program: &mut Vec<i32>, pc: &mut u32) -> u32 {
