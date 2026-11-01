@@ -4,13 +4,13 @@ use common::{read_example_input, read_input};
 use Direction::{Down, Left, Right, Up};
 
 fn main() {
-    part1();
-    part2();
+    let least_dist = part1();
+    part2(least_dist);
 }
 
-fn part1() {
+fn part1() -> Vec<Coord> {
     let input = read_input(3).unwrap();
-    // let input = read_example_input(3, 2).unwrap();
+    // let input = read_example_input(3, 3).unwrap();
 
     let (path_a, path_b) = parse_input(input);
 
@@ -49,10 +49,45 @@ fn part1() {
 
     let least_dist = cross_positions_dists.first().unwrap();
 
-    println!("Part 1: the minimum cross distance is {}", least_dist)
+    println!("Part 1: the minimum cross distance is {}", least_dist);
+
+    cross_positions
 }
 
-fn part2() {}
+fn part2(intersections: Vec<Coord>) {
+    let input = read_input(3).unwrap();
+    // let input = read_example_input(3, 3).unwrap();
+
+    let (path_a, path_b) = parse_input(input);
+
+    let mut distances_map_path_a: HashMap<Coord, u32> = HashMap::new();
+    for intersection in intersections.clone() {
+        let dist = find_steps_to_intersection(&path_a, intersection);
+        distances_map_path_a.insert(intersection, dist);
+    }
+
+    let mut distances_map_path_b: HashMap<Coord, u32> = HashMap::new();
+    for intersection in intersections.clone() {
+        let dist = find_steps_to_intersection(&path_b, intersection);
+        distances_map_path_b.insert(intersection, dist);
+    }
+
+    let mut steps_dist: Vec<u32> = distances_map_path_a
+        .iter()
+        .map(|(coord, dist)| {
+            let dist_b = distances_map_path_b.get(coord).unwrap().to_owned();
+            dist + dist_b
+        })
+        .filter(|&val| val > 0)
+        .collect();
+
+    steps_dist.sort();
+
+    println!(
+        "Part 2: the minimum number of steps is {}",
+        steps_dist.first().unwrap()
+    );
+}
 
 #[derive(Debug)]
 enum Direction {
@@ -165,4 +200,34 @@ impl Instruction {
 
         *curr_pos = new_coord;
     }
+
+    fn step_coord(&self, coord: Coord) -> Coord {
+        let mut new_coord = coord;
+
+        match self.direction {
+            Right => new_coord.x += 1,
+            Up => new_coord.y += 1,
+            Left => new_coord.x -= 1,
+            Down => new_coord.y -= 1,
+        }
+
+        new_coord
+    }
+}
+
+fn find_steps_to_intersection(instructions: &[Instruction], intersection: Coord) -> u32 {
+    let mut pos = Coord { x: 0, y: 0 };
+    let mut step_count = 0;
+
+    'outer: for instruction in instructions {
+        for step in 0..instruction.amount {
+            if pos == intersection {
+                break 'outer;
+            }
+            pos = instruction.step_coord(pos);
+            step_count += 1;
+        }
+    }
+
+    step_count
 }
